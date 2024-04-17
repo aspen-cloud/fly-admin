@@ -1,6 +1,6 @@
 {
-  "name": "fly-admin",
-  "version": "0.0.0-automated",
+  "name": "@triplit/fly-admin",
+  "version": "1.6.2",
   "description": "A Typescript client for managing Fly infrastructure.",
   "main": "dist/main.js",
   "types": "dist/main.d.ts",
@@ -14,7 +14,8 @@
     "lint": "eslint src/**/*.ts",
     "test": "jest",
     "gen:types": "npx swagger-typescript-api -p https://docs.machines.dev/swagger/doc.json -o ./src/lib --extract-enums --extract-request-params --no-client -n types.ts",
-    "all": "npm run build && npm run format && npm run lint && npm test"
+    "all": "npm run build && npm run format && npm run lint && npm test",
+    "publish": "npm run build && npm publish --access public"
   },
   "repository": {
     "type": "git",
@@ -25,10 +26,9 @@
     "api",
     "client"
   ],
-  "author": "Supabase",
   "license": "MIT",
   "dependencies": {
-    "cross-fetch": "^3.1.5"
+    "cross-fetch": "^4.0.0"
   },
   "devDependencies": {
     "@types/node": "^18.15.0",
