@@ -1,4 +1,5 @@
 import Client from '../client'
+import { APIResponse } from './utils'
 
 export enum AddressType {
   v4 = 'v4',
@@ -71,8 +72,8 @@ export class Network {
   // Ref: https://github.com/superfly/flyctl/blob/master/api/resource_ip_addresses.go#L79
   async allocateIpAddress(
     input: AllocateIPAddressInput
-  ): Promise<AllocateIPAddressOutput> {
-    return this.client.gqlPostOrThrow({
+  ): Promise<APIResponse<AllocateIPAddressOutput>> {
+    return this.client.safeGqlPost({
       query: allocateIpAddressQuery,
       variables: { input },
     })
@@ -80,8 +81,8 @@ export class Network {
 
   async releaseIpAddress(
     input: ReleaseIPAddressInput
-  ): Promise<ReleaseIPAddressOutput> {
-    return this.client.gqlPostOrThrow({
+  ): Promise<APIResponse<ReleaseIPAddressOutput>> {
+    return this.client.safeGqlPost({
       query: releaseIpAddressQuery,
       variables: { input },
     })

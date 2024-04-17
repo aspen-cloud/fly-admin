@@ -15,6 +15,7 @@ import {
   StateEnum as ApiMachineState,
   SignalRequestSignalEnum as ApiMachineSignal,
 } from './types'
+import { APIResponse } from './utils'
 
 // We override the generated types from openapi spec to mark fields as non-optional
 export interface MachineConfig extends ApiMachineConfig {
@@ -302,7 +303,9 @@ export class Machine {
     this.client = client
   }
 
-  async listMachines(app_name: ListMachineRequest): Promise<MachineResponse[]> {
+  async listMachines(
+    app_name: ListMachineRequest
+  ): Promise<APIResponse<MachineResponse[]>> {
     let path: string
     if (typeof app_name === 'string') {
       path = `apps/${app_name}/machines`
@@ -312,116 +315,144 @@ export class Machine {
       const query = new URLSearchParams(params).toString()
       if (query) path += `?${query}`
     }
-    return await this.client.restOrThrow(path)
+    return await this.client.safeRest(path)
   }
 
-  async getMachine(payload: GetMachineRequest): Promise<MachineResponse> {
+  async getMachine(
+    payload: GetMachineRequest
+  ): Promise<APIResponse<MachineResponse>> {
     const { app_name, machine_id } = payload
     const path = `apps/${app_name}/machines/${machine_id}`
-    return await this.client.restOrThrow(path)
+    return await this.client.safeRest(path)
   }
 
-  async createMachine(payload: CreateMachineRequest): Promise<MachineResponse> {
+  async createMachine(
+    payload: CreateMachineRequest
+  ): Promise<APIResponse<MachineResponse>> {
     const { app_name, ...body } = payload
     const path = `apps/${app_name}/machines`
-    return await this.client.restOrThrow(path, 'POST', body)
+    return await this.client.safeRest(path, 'POST', body)
   }
 
-  async updateMachine(payload: UpdateMachineRequest): Promise<MachineResponse> {
+  async updateMachine(
+    payload: UpdateMachineRequest
+  ): Promise<APIResponse<MachineResponse>> {
     const { app_name, machine_id, ...body } = payload
     const path = `apps/${app_name}/machines/${machine_id}`
-    return await this.client.restOrThrow(path, 'POST', body)
+    return await this.client.safeRest(path, 'POST', body)
   }
 
-  async deleteMachine(payload: DeleteMachineRequest): Promise<OkResponse> {
+  async deleteMachine(
+    payload: DeleteMachineRequest
+  ): Promise<APIResponse<OkResponse>> {
     const { app_name, machine_id, force } = payload
     const query = force ? '?kill=true' : ''
     const path = `apps/${app_name}/machines/${machine_id}${query}`
-    return await this.client.restOrThrow(path, 'DELETE')
+    return await this.client.safeRest(path, 'DELETE')
   }
 
-  async startMachine(payload: StartMachineRequest): Promise<OkResponse> {
+  async startMachine(
+    payload: StartMachineRequest
+  ): Promise<APIResponse<OkResponse>> {
     const { app_name, machine_id } = payload
     const path = `apps/${app_name}/machines/${machine_id}/start`
-    return await this.client.restOrThrow(path, 'POST')
+    return await this.client.safeRest(path, 'POST')
   }
 
-  async stopMachine(payload: StopMachineRequest): Promise<OkResponse> {
+  async stopMachine(
+    payload: StopMachineRequest
+  ): Promise<APIResponse<OkResponse>> {
     const { app_name, machine_id, ...body } = payload
     const path = `apps/${app_name}/machines/${machine_id}/stop`
-    return await this.client.restOrThrow(path, 'POST', {
+    return await this.client.safeRest(path, 'POST', {
       signal: ApiMachineSignal.SIGTERM,
       ...body,
     })
   }
 
-  async restartMachine(payload: RestartMachineRequest): Promise<OkResponse> {
+  async restartMachine(
+    payload: RestartMachineRequest
+  ): Promise<APIResponse<OkResponse>> {
     const { app_name, machine_id, ...body } = payload
     const path = `apps/${app_name}/machines/${machine_id}/restart`
-    return await this.client.restOrThrow(path, 'POST', body)
+    return await this.client.safeRest(path, 'POST', body)
   }
 
-  async signalMachine(payload: SignalMachineRequest): Promise<OkResponse> {
+  async signalMachine(
+    payload: SignalMachineRequest
+  ): Promise<APIResponse<OkResponse>> {
     const { app_name, machine_id, ...body } = payload
     const path = `apps/${app_name}/machines/${machine_id}/signal`
-    return await this.client.restOrThrow(path, 'POST', body)
+    return await this.client.safeRest(path, 'POST', body)
   }
 
   async listEvents(
     payload: ListEventsRequest
-  ): Promise<MachineResponse['events']> {
+  ): Promise<APIResponse<MachineResponse['events']>> {
     const { app_name, machine_id } = payload
     const path = `apps/${app_name}/machines/${machine_id}/events`
-    return await this.client.restOrThrow(path)
+    return await this.client.safeRest(path)
   }
 
   async listVersions(
     payload: ListVersionsRequest
-  ): Promise<MachineVersionResponse[]> {
+  ): Promise<APIResponse<MachineVersionResponse[]>> {
     const { app_name, machine_id } = payload
     const path = `apps/${app_name}/machines/${machine_id}/versions`
-    return await this.client.restOrThrow(path)
+    return await this.client.safeRest(path)
   }
 
-  async listProcesses(payload: ListProcessesRequest): Promise<ProcessResponse> {
+  async listProcesses(
+    payload: ListProcessesRequest
+  ): Promise<APIResponse<ProcessResponse>> {
     const { app_name, machine_id, ...params } = payload
     let path = `apps/${app_name}/machines/${machine_id}/ps`
     const query = new URLSearchParams(params).toString()
     if (query) path += `?${query}`
-    return await this.client.restOrThrow(path)
+    return await this.client.safeRest(path)
   }
 
-  async waitMachine(payload: WaitMachineRequest): Promise<OkResponse> {
+  async waitMachine(
+    payload: WaitMachineRequest
+  ): Promise<APIResponse<OkResponse>> {
     const { app_name, machine_id, ...params } = payload
     let path = `apps/${app_name}/machines/${machine_id}/wait`
     if (params.timeout?.endsWith('s'))
       params.timeout = params.timeout.slice(0, -1)
     const query = new URLSearchParams(params).toString()
     if (query) path += `?${query}`
-    return await this.client.restOrThrow(path)
+    return await this.client.safeRest(path)
   }
 
-  async getLease(payload: GetLeaseRequest): Promise<LeaseResponse> {
+  async getLease(
+    payload: GetLeaseRequest
+  ): Promise<APIResponse<LeaseResponse>> {
     const { app_name, machine_id } = payload
     const path = `apps/${app_name}/machines/${machine_id}/lease`
-    return await this.client.restOrThrow(path)
+    return await this.client.safeRest(path)
   }
 
-  async acquireLease(payload: AcquireLeaseRequest): Promise<LeaseResponse> {
+  async acquireLease(
+    payload: AcquireLeaseRequest
+  ): Promise<APIResponse<LeaseResponse>> {
     const { app_name, machine_id, ...body } = payload
     const path = `apps/${app_name}/machines/${machine_id}/lease`
-    return await this.client.restOrThrow(path, 'POST', body)
+    return await this.client.safeRest(path, 'POST', body)
   }
 
-  async cordonMachine(payload: CordonMachineRequest): Promise<OkResponse> {
+  async cordonMachine(
+    payload: CordonMachineRequest
+  ): Promise<APIResponse<OkResponse>> {
     const { app_name, machine_id } = payload
     const path = `apps/${app_name}/machines/${machine_id}/cordon`
-    return await this.client.restOrThrow(path, 'POST')
+    return await this.client.safeRest(path, 'POST')
   }
 
-  async uncordonMachine(payload: UncordonMachineRequest): Promise<OkResponse> {
+  async uncordonMachine(
+    payload: UncordonMachineRequest
+  ): Promise<APIResponse<OkResponse>> {
     const { app_name, machine_id } = payload
     const path = `apps/${app_name}/machines/${machine_id}/uncordon`
-    return await this.client.restOrThrow(path, 'POST')
+    return await this.client.safeRest(path, 'POST')
   }
 }

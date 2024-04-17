@@ -1,4 +1,5 @@
 import Client from '../client'
+import { APIResponse } from './utils'
 
 interface RegionResponse {
   name: string
@@ -40,8 +41,8 @@ export class Regions {
     this.client = client
   }
 
-  async getRegions(): Promise<GetRegionsOutput> {
-    return this.client.gqlPostOrThrow({
+  async getRegions(): Promise<APIResponse<GetRegionsOutput>> {
+    return this.client.safeGqlPost({
       query: getRegionsQuery,
       variables: {},
     })

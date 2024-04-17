@@ -1,4 +1,5 @@
 import Client from '../client'
+import { APIResponse } from './utils'
 
 export type ListAppRequest = string
 
@@ -67,37 +68,53 @@ export class App {
     this.client = client
   }
 
-  async listApps(org_slug: ListAppRequest): Promise<ListAppResponse> {
+  async listApps(
+    org_slug: ListAppRequest
+  ): Promise<APIResponse<ListAppResponse>> {
     const path = `apps?org_slug=${org_slug}`
-    return await this.client.restOrThrow(path)
+    return await this.client.safeRest(path)
   }
 
-  async getApp(app_name: GetAppRequest): Promise<AppResponse> {
+  async getApp(app_name: GetAppRequest): Promise<APIResponse<AppResponse>> {
     const path = `apps/${app_name}`
-    return await this.client.restOrThrow(path)
+    return await this.client.safeRest(path)
   }
 
-  async getAppDetailed(app_name: GetAppRequest): Promise<AppResponse> {
-    const { app } = await this.client.gqlPostOrThrow({
+  async getAppDetailed(
+    app_name: GetAppRequest
+  ): Promise<APIResponse<AppResponse>> {
+    const response = await this.client.safeGqlPost<
+      string,
+      { app: AppResponse }
+    >({
       query: getAppQuery,
       variables: { name: app_name },
-    }) as { app: AppResponse }
+    })
 
-    const ipAddresses = app.ipAddresses as unknown as { nodes: IPAddress[] }
+    if (response.error) {
+      return response
+    }
+
+    const ipAddresses = response.data.app.ipAddresses as unknown as {
+      nodes: IPAddress[]
+    }
 
     return {
-      ...app,
-      ipAddresses: ipAddresses.nodes,
+      data: {
+        ...response.data.app,
+        ipAddresses: ipAddresses.nodes,
+      },
+      error: undefined,
     }
   }
 
-  async createApp(payload: CreateAppRequest): Promise<void> {
+  async createApp(payload: CreateAppRequest): Promise<APIResponse<void>> {
     const path = 'apps'
-    return await this.client.restOrThrow(path, 'POST', payload)
+    return await this.client.safeRest(path, 'POST', payload)
   }
 
-  async deleteApp(app_name: DeleteAppRequest): Promise<void> {
+  async deleteApp(app_name: DeleteAppRequest): Promise<APIResponse<void>> {
     const path = `apps/${app_name}`
-    return await this.client.restOrThrow(path, 'DELETE')
+    return await this.client.safeRest(path, 'DELETE')
   }
 }

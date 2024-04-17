@@ -1,4 +1,5 @@
 import Client from '../client'
+import { APIResponse } from './utils'
 
 export interface SetSecretsInput {
   appId: string
@@ -90,15 +91,19 @@ export class Secret {
     this.client = client
   }
 
-  async setSecrets(input: SetSecretsInput): Promise<SetSecretsOutput> {
-    return await this.client.gqlPostOrThrow({
+  async setSecrets(
+    input: SetSecretsInput
+  ): Promise<APIResponse<SetSecretsOutput>> {
+    return await this.client.safeGqlPost({
       query: setSecretsQuery,
       variables: { input },
     })
   }
 
-  async unsetSecrets(input: UnsetSecretsInput): Promise<UnsetSecretsOutput> {
-    return await this.client.gqlPostOrThrow({
+  async unsetSecrets(
+    input: UnsetSecretsInput
+  ): Promise<APIResponse<UnsetSecretsOutput>> {
+    return await this.client.safeGqlPost({
       query: unsetSecretsQuery,
       variables: { input },
     })

@@ -1,5 +1,6 @@
 import Client from '../client'
 import { CreateVolumeRequest as ApiCreateVolumeRequest } from './types'
+import { APIResponse } from './utils'
 
 export type ListVolumesRequest = string
 
@@ -62,42 +63,50 @@ export class Volume {
     this.client = client
   }
 
-  async listVolumes(app_name: ListVolumesRequest): Promise<VolumeResponse[]> {
+  async listVolumes(
+    app_name: ListVolumesRequest
+  ): Promise<APIResponse<VolumeResponse[]>> {
     const path = `apps/${app_name}/volumes`
-    return await this.client.restOrThrow(path)
+    return await this.client.safeRest(path)
   }
 
-  async getVolume(payload: GetVolumeRequest): Promise<VolumeResponse> {
+  async getVolume(
+    payload: GetVolumeRequest
+  ): Promise<APIResponse<VolumeResponse>> {
     const { app_name, volume_id } = payload
     const path = `apps/${app_name}/volumes/${volume_id}`
-    return await this.client.restOrThrow(path)
+    return await this.client.safeRest(path)
   }
 
-  async createVolume(payload: CreateVolumeRequest): Promise<VolumeResponse> {
+  async createVolume(
+    payload: CreateVolumeRequest
+  ): Promise<APIResponse<VolumeResponse>> {
     const { app_name, ...body } = payload
     const path = `apps/${app_name}/volumes`
-    return await this.client.restOrThrow(path, 'POST', body)
+    return await this.client.safeRest(path, 'POST', body)
   }
 
-  async deleteVolume(payload: DeleteVolumeRequest): Promise<VolumeResponse> {
+  async deleteVolume(
+    payload: DeleteVolumeRequest
+  ): Promise<APIResponse<VolumeResponse>> {
     const { app_name, volume_id } = payload
     const path = `apps/${app_name}/volumes/${volume_id}`
-    return await this.client.restOrThrow(path, 'DELETE')
+    return await this.client.safeRest(path, 'DELETE')
   }
 
   async extendVolume(
     payload: ExtendVolumeRequest
-  ): Promise<ExtendVolumeResponse> {
+  ): Promise<APIResponse<ExtendVolumeResponse>> {
     const { app_name, volume_id, ...body } = payload
     const path = `apps/${app_name}/volumes/${volume_id}/extend`
-    return await this.client.restOrThrow(path, 'PUT', body)
+    return await this.client.safeRest(path, 'PUT', body)
   }
 
   async listSnapshots(
     payload: ListSnapshotsRequest
-  ): Promise<SnapshotResponse> {
+  ): Promise<APIResponse<SnapshotResponse>> {
     const { app_name, volume_id } = payload
     const path = `apps/${app_name}/volumes/${volume_id}/snapshots`
-    return await this.client.restOrThrow(path)
+    return await this.client.safeRest(path)
   }
 }

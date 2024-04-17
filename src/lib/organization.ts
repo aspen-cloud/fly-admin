@@ -1,4 +1,5 @@
 import Client from '../client'
+import { APIResponse } from './utils'
 
 export type GetOrganizationInput = string
 
@@ -33,8 +34,8 @@ export class Organization {
 
   async getOrganization(
     slug: GetOrganizationInput
-  ): Promise<GetOrganizationOutput> {
-    return this.client.gqlPostOrThrow({
+  ): Promise<APIResponse<GetOrganizationOutput>> {
+    return this.client.safeGqlPost({
       query: getOrganizationQuery,
       variables: { slug },
     })
