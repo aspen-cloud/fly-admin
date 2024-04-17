@@ -1,6 +1,6 @@
 {
   "name": "@triplit/fly-admin",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "description": "A Typescript client for managing Fly infrastructure.",
   "main": "dist/main.js",
   "types": "dist/main.d.ts",
