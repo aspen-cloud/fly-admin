@@ -139,7 +139,7 @@ export class App {
       return response
     }
     return {
-      data: parseOrgResponse(response.data.organization),
+      data: parseOrgResponse(response.data.organization).apps,
       error: undefined,
     }
   }
