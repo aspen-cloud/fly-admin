@@ -29,6 +29,14 @@ const getAppQuery = `query($name: String!) {
           address
         }
       }
+      machines {
+        nodes {
+            id
+            name
+            state
+            region
+        }
+      }
   }
 }`
 
@@ -46,6 +54,14 @@ export interface AppResponse {
     slug: string
   }
   ipAddresses: IPAddress[]
+  machines: AppMachine[]
+}
+
+interface AppMachine {
+  id: string
+  name: string
+  state: string
+  region: string
 }
 
 export interface IPAddress {
@@ -99,10 +115,15 @@ export class App {
       nodes: IPAddress[]
     }
 
+    const machines = response.data.app.machines as unknown as {
+      nodes: AppMachine[]
+    }
+
     return {
       data: {
         ...response.data.app,
         ipAddresses: ipAddresses.nodes,
+        machines: machines.nodes,
       },
       error: undefined,
     }
