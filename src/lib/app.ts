@@ -12,7 +12,41 @@ export interface ListAppResponse {
   }[]
 }
 
+export interface ListAppDetailedResponse {
+  apps: AppResponse[]
+}
+
 export type GetAppRequest = string
+
+const getOrganizationApps = `query($slug: String!) {
+  organization(slug: $slug) {
+    apps {
+        nodes {
+            name
+            status
+            organization {
+                name
+                slug
+            }
+            ipAddresses {
+                nodes {
+                type
+                region
+                address
+                }
+            }
+            machines {
+                nodes {
+                    id
+                    name
+                    state
+                    region
+                }
+            }
+        }
+    }
+  }
+}`
 
 const getAppQuery = `query($name: String!) {
   app(name: $name) {
@@ -57,7 +91,7 @@ export interface AppResponse {
   machines: AppMachine[]
 }
 
-interface AppMachine {
+export interface AppMachine {
   id: string
   name: string
   state: string
@@ -91,6 +125,25 @@ export class App {
     return await this.client.safeRest(path)
   }
 
+  async listAppsDetailed(
+    org_slug: ListAppRequest
+  ): Promise<APIResponse<ListAppDetailedResponse>> {
+    const response = await this.client.safeGqlPost<
+      string,
+      { app: AppResponse }
+    >({
+      query: getOrganizationApps,
+      variables: { slug: org_slug },
+    })
+    if (response.error) {
+      return response
+    }
+    return {
+      data: parseOrgResponse(response),
+      error: undefined,
+    }
+  }
+
   async getApp(app_name: GetAppRequest): Promise<APIResponse<AppResponse>> {
     const path = `apps/${app_name}`
     return await this.client.safeRest(path)
@@ -111,20 +164,8 @@ export class App {
       return response
     }
 
-    const ipAddresses = response.data.app.ipAddresses as unknown as {
-      nodes: IPAddress[]
-    }
-
-    const machines = response.data.app.machines as unknown as {
-      nodes: AppMachine[]
-    }
-
     return {
-      data: {
-        ...response.data.app,
-        ipAddresses: ipAddresses.nodes,
-        machines: machines.nodes,
-      },
+      data: parseAppResponse(response),
       error: undefined,
     }
   }
@@ -138,4 +179,27 @@ export class App {
     const path = `apps/${app_name}`
     return await this.client.safeRest(path, 'DELETE')
   }
+}
+
+function parseAppResponse(appData: any) {
+  const ipAddresses = parseNodes<IPAddress>(appData, 'ipAddresses')
+  const machines = parseNodes<AppMachine>(appData, 'machines')
+
+  return {
+    ...appData,
+    ipAddresses,
+    machines,
+  }
+}
+
+function parseOrgResponse(orgData: any) {
+  const apps = parseNodes(orgData, 'apps').map(parseAppResponse)
+  return {
+    ...orgData,
+    apps,
+  }
+}
+
+function parseNodes<T>(data: any, key: string): T[] {
+  return data[key].nodes
 }
