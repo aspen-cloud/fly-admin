@@ -130,7 +130,7 @@ export class App {
   ): Promise<APIResponse<ListAppDetailedResponse>> {
     const response = await this.client.safeGqlPost<
       string,
-      { app: AppResponse }
+      { organization: any }
     >({
       query: getOrganizationApps,
       variables: { slug: org_slug },
@@ -139,7 +139,7 @@ export class App {
       return response
     }
     return {
-      data: parseOrgResponse(response),
+      data: parseOrgResponse(response.data.organization),
       error: undefined,
     }
   }
@@ -152,10 +152,7 @@ export class App {
   async getAppDetailed(
     app_name: GetAppRequest
   ): Promise<APIResponse<AppResponse>> {
-    const response = await this.client.safeGqlPost<
-      string,
-      { app: AppResponse }
-    >({
+    const response = await this.client.safeGqlPost<string, { app: any }>({
       query: getAppQuery,
       variables: { name: app_name },
     })
@@ -165,7 +162,7 @@ export class App {
     }
 
     return {
-      data: parseAppResponse(response),
+      data: parseAppResponse(response.data.app),
       error: undefined,
     }
   }
