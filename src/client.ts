@@ -157,7 +157,8 @@ class Client {
   async safeRest<U, V>(
     path: string,
     method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
-    body?: U
+    body?: U,
+    headers?: Record<string, string>
   ): Promise<APIResponse<V>> {
     try {
       const resp = await crossFetch(`${this.apiUrl}/v1/${path}`, {
@@ -165,6 +166,7 @@ class Client {
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
+          ...headers,
         },
         body: JSON.stringify(body),
       })

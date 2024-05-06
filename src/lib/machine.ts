@@ -227,6 +227,7 @@ export type StartMachineRequest = GetMachineRequest
 
 export interface UpdateMachineRequest extends GetMachineRequest {
   config: MachineConfig
+  lease_nonce: string
 }
 
 export type ListEventsRequest = GetMachineRequest
@@ -337,9 +338,11 @@ export class Machine {
   async updateMachine(
     payload: UpdateMachineRequest
   ): Promise<APIResponse<MachineResponse>> {
-    const { app_name, machine_id, ...body } = payload
+    const { app_name, machine_id, lease_nonce, ...body } = payload
     const path = `apps/${app_name}/machines/${machine_id}`
-    return await this.client.safeRest(path, 'POST', body)
+    return await this.client.safeRest(path, 'POST', body, {
+      'fly-machine-lease-nonce': lease_nonce,
+    })
   }
 
   async deleteMachine(
@@ -438,6 +441,16 @@ export class Machine {
     const { app_name, machine_id, ...body } = payload
     const path = `apps/${app_name}/machines/${machine_id}/lease`
     return await this.client.safeRest(path, 'POST', body)
+  }
+
+  async deleteLease(
+    payload: DeleteLeaseRequest
+  ): Promise<APIResponse<OkResponse>> {
+    const { app_name, machine_id, nonce } = payload
+    const path = `apps/${app_name}/machines/${machine_id}/lease/${nonce}`
+    return await this.client.safeRest(path, 'DELETE', {
+      'fly-machine-lease-nonce': nonce,
+    })
   }
 
   async cordonMachine(
