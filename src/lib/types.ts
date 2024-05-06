@@ -25,19 +25,20 @@ export interface CheckStatus {
 
 export interface CreateAppRequest {
   app_name?: string
-  app_role_id?: string
+  enable_subdomains?: boolean
   network?: string
   org_slug?: string
 }
 
 export interface CreateLeaseRequest {
   description?: string
+  /** seconds lease will be valid */
   ttl?: number
 }
 
 export interface CreateMachineRequest {
   /** An object defining the Machine configuration */
-  config?: ApiMachineConfig
+  config?: FlyMachineConfig
   lease_ttl?: number
   lsvd?: boolean
   /** Unique name for this Machine. If omitted, one is generated for you */
@@ -48,8 +49,13 @@ export interface CreateMachineRequest {
   skip_service_registration?: boolean
 }
 
+export interface CreateOIDCTokenRequest {
+  aud?: string
+}
+
 export interface CreateVolumeRequest {
-  compute?: ApiMachineGuest
+  compute?: FlyMachineGuest
+  compute_image?: string
   encrypted?: boolean
   fstype?: string
   machines_only?: boolean
@@ -120,9 +126,10 @@ export interface ListenSocket {
 
 export interface Machine {
   checks?: CheckStatus[]
-  config?: ApiMachineConfig
+  config?: FlyMachineConfig
   created_at?: string
   events?: MachineEvent[]
+  host_status?: MachineHostStatusEnum
   id?: string
   image_ref?: ImageRef
   /** InstanceID is unique for each version of the machine */
@@ -154,7 +161,7 @@ export interface MachineExecRequest {
 }
 
 export interface MachineVersion {
-  user_config?: ApiMachineConfig
+  user_config?: FlyMachineConfig
   version?: string
 }
 
@@ -180,12 +187,12 @@ export interface SignalRequest {
 
 export interface StopRequest {
   signal?: string
-  timeout?: string
+  timeout?: FlyDuration
 }
 
 export interface UpdateMachineRequest {
   /** An object defining the Machine configuration */
-  config?: ApiMachineConfig
+  config?: FlyMachineConfig
   current_version?: string
   lease_ttl?: number
   lsvd?: boolean
@@ -198,12 +205,14 @@ export interface UpdateMachineRequest {
 }
 
 export interface UpdateVolumeRequest {
+  auto_backup_enabled?: boolean
   snapshot_retention?: number
 }
 
 export interface Volume {
   attached_alloc_id?: string
   attached_machine_id?: string
+  auto_backup_enabled?: boolean
   block_size?: number
   blocks?: number
   blocks_avail?: number
@@ -211,6 +220,7 @@ export interface Volume {
   created_at?: string
   encrypted?: boolean
   fstype?: string
+  host_status?: VolumeHostStatusEnum
   id?: string
   name?: string
   region?: string
@@ -228,12 +238,31 @@ export interface VolumeSnapshot {
   status?: string
 }
 
-export interface ApiDNSConfig {
+export interface FlyDNSConfig {
+  dns_forward_rules?: FlyDnsForwardRule[]
+  nameservers?: string[]
+  options?: FlyDnsOption[]
+  searches?: string[]
   skip_registration?: boolean
 }
 
+export interface FlyDuration {
+  'time.Duration'?: FlyDurationTimeDurationEnum
+}
+
+/** EnvVar defines an environment variable to be populated from a machine field, env_var */
+export interface FlyEnvFrom {
+  /**
+   * EnvVar is required and is the name of the environment variable that will be set from the
+   * secret. It must be a valid environment variable name.
+   */
+  env_var?: string
+  /** FieldRef selects a field of the Machine: supports id, version, app_name, private_ip, region, image. */
+  field_ref?: FlyEnvFromFieldRefEnum
+}
+
 /** A file that will be written to the Machine. One of RawValue or SecretName must be set. */
-export interface ApiFile {
+export interface FlyFile {
   /**
    * GuestPath is the path on the machine where the file will be written and must be an absolute path.
    * For example: /full/path/to/file.json
@@ -245,23 +274,24 @@ export interface ApiFile {
   secret_name?: string
 }
 
-export interface ApiHTTPOptions {
+export interface FlyHTTPOptions {
   compress?: boolean
   h2_backend?: boolean
-  response?: ApiHTTPResponseOptions
+  response?: FlyHTTPResponseOptions
 }
 
-export interface ApiHTTPResponseOptions {
+export interface FlyHTTPResponseOptions {
   headers?: Record<string, any>
+  pristine?: boolean
 }
 
 /** An optional object that defines one or more named checks. The key for each check is the check name. */
-export interface ApiMachineCheck {
+export interface FlyMachineCheck {
   /** The time to wait after a VM starts before checking its health */
-  grace_period?: string
-  headers?: ApiMachineHTTPHeader[]
+  grace_period?: FlyDuration
+  headers?: FlyMachineHTTPHeader[]
   /** The time between connectivity checks */
-  interval?: string
+  interval?: FlyDuration
   /** For http checks, the HTTP method to use to when making the request */
   method?: string
   /** For http checks, the path to send the request to */
@@ -271,7 +301,7 @@ export interface ApiMachineCheck {
   /** For http checks, whether to use http or https */
   protocol?: string
   /** The maximum time a connection can take before being reported as failing its health check */
-  timeout?: string
+  timeout?: FlyDuration
   /** If the protocol is https, the hostname to use for TLS certificate validation */
   tls_server_name?: string
   /** For http checks with https protocol, whether or not to verify the TLS certificate */
@@ -280,28 +310,28 @@ export interface ApiMachineCheck {
   type?: string
 }
 
-export interface ApiMachineConfig {
+export interface FlyMachineConfig {
   /** Optional boolean telling the Machine to destroy itself once it’s complete (default false) */
   auto_destroy?: boolean
-  checks?: Record<string, ApiMachineCheck>
+  checks?: Record<string, FlyMachineCheck>
   /** Deprecated: use Service.Autostart instead */
   disable_machine_autostart?: boolean
-  dns?: ApiDNSConfig
+  dns?: FlyDNSConfig
   /** An object filled with key/value pairs to be set as environment variables */
   env?: Record<string, string>
-  files?: ApiFile[]
-  guest?: ApiMachineGuest
+  files?: FlyFile[]
+  guest?: FlyMachineGuest
   /** The docker image to run */
   image?: string
-  init?: ApiMachineInit
+  init?: FlyMachineInit
   metadata?: Record<string, string>
-  metrics?: ApiMachineMetrics
-  mounts?: ApiMachineMount[]
-  processes?: ApiMachineProcess[]
+  metrics?: FlyMachineMetrics
+  mounts?: FlyMachineMount[]
+  processes?: FlyMachineProcess[]
   /** The Machine restart policy defines whether and how flyd restarts a Machine after its main process exits. See https://fly.io/docs/machines/guides-examples/machine-restart-policy/. */
-  restart?: ApiMachineRestart
+  restart?: FlyMachineRestart
   schedule?: string
-  services?: ApiMachineService[]
+  services?: FlyMachineService[]
   /** Deprecated: use Guest instead */
   size?: string
   /**
@@ -309,28 +339,29 @@ export interface ApiMachineConfig {
    * the standby machine will be started.
    */
   standbys?: string[]
-  statics?: ApiStatic[]
-  stop_config?: ApiStopConfig
+  statics?: FlyStatic[]
+  stop_config?: FlyStopConfig
 }
 
-export interface ApiMachineGuest {
+export interface FlyMachineGuest {
   cpu_kind?: string
   cpus?: number
   gpu_kind?: string
+  gpus?: number
   host_dedication_id?: string
   kernel_args?: string[]
   memory_mb?: number
 }
 
 /** For http checks, an array of objects with string field Name and array of strings field Values. The key/value pairs specify header and header values that will get passed with the check call. */
-export interface ApiMachineHTTPHeader {
+export interface FlyMachineHTTPHeader {
   /** The header name */
   name?: string
   /** The header value */
   values?: string[]
 }
 
-export interface ApiMachineInit {
+export interface FlyMachineInit {
   cmd?: string[]
   entrypoint?: string[]
   exec?: string[]
@@ -339,12 +370,12 @@ export interface ApiMachineInit {
   tty?: boolean
 }
 
-export interface ApiMachineMetrics {
+export interface FlyMachineMetrics {
   path?: string
   port?: number
 }
 
-export interface ApiMachineMount {
+export interface FlyMachineMount {
   add_size_gb?: number
   encrypted?: boolean
   extend_threshold_percent?: number
@@ -355,27 +386,40 @@ export interface ApiMachineMount {
   volume?: string
 }
 
-export interface ApiMachinePort {
+export interface FlyMachinePort {
   end_port?: number
   force_https?: boolean
   handlers?: string[]
-  http_options?: ApiHTTPOptions
+  http_options?: FlyHTTPOptions
   port?: number
-  proxy_proto_options?: ApiProxyProtoOptions
+  proxy_proto_options?: FlyProxyProtoOptions
   start_port?: number
-  tls_options?: ApiTLSOptions
+  tls_options?: FlyTLSOptions
 }
 
-export interface ApiMachineProcess {
+export interface FlyMachineProcess {
   cmd?: string[]
   entrypoint?: string[]
   env?: Record<string, string>
+  /** EnvFrom can be provided to set environment variables from machine fields. */
+  env_from?: FlyEnvFrom[]
   exec?: string[]
+  /**
+   * IgnoreAppSecrets can be set to true to ignore the secrets for the App the Machine belongs to
+   * and only use the secrets provided at the process level. The default/legacy behavior is to use
+   * the secrets provided at the App level.
+   */
+  ignore_app_secrets?: boolean
+  /**
+   * Secrets can be provided at the process level to explicitly indicate which secrets should be
+   * used for the process. If not provided, the secrets provided at the machine level will be used.
+   */
+  secrets?: FlyMachineSecret[]
   user?: string
 }
 
 /** The Machine restart policy defines whether and how flyd restarts a Machine after its main process exits. See https://fly.io/docs/machines/guides-examples/machine-restart-policy/. */
-export interface ApiMachineRestart {
+export interface FlyMachineRestart {
   /** When policy is on-failure, the maximum number of times to attempt to restart the Machine before letting it stop. */
   max_retries?: number
   /**
@@ -383,51 +427,82 @@ export interface ApiMachineRestart {
    * * always - Always restart a Machine automatically and never let it enter a stopped state, even when the main process exits cleanly.
    * * on-failure - Try up to MaxRetries times to automatically restart the Machine if it exits with a non-zero exit code. Default when no explicit policy is set, and for Machines with schedules.
    */
-  policy?: ApiMachineRestartPolicyEnum
+  policy?: FlyMachineRestartPolicyEnum
 }
 
-export interface ApiMachineService {
+/** A Secret needing to be set in the environment of the Machine. env_var is required */
+export interface FlyMachineSecret {
+  /**
+   * EnvVar is required and is the name of the environment variable that will be set from the
+   * secret. It must be a valid environment variable name.
+   */
+  env_var?: string
+  /**
+   * Name is optional and when provided is used to reference a secret name where the EnvVar is
+   * different from what was set as the secret name.
+   */
+  name?: string
+}
+
+export interface FlyMachineService {
   autostart?: boolean
   autostop?: boolean
-  checks?: ApiMachineCheck[]
-  concurrency?: ApiMachineServiceConcurrency
+  checks?: FlyMachineCheck[]
+  concurrency?: FlyMachineServiceConcurrency
   force_instance_description?: string
   force_instance_key?: string
   internal_port?: number
   min_machines_running?: number
-  ports?: ApiMachinePort[]
+  ports?: FlyMachinePort[]
   protocol?: string
 }
 
-export interface ApiMachineServiceConcurrency {
+export interface FlyMachineServiceConcurrency {
   hard_limit?: number
   soft_limit?: number
   type?: string
 }
 
-export interface ApiProxyProtoOptions {
+export interface FlyProxyProtoOptions {
   version?: string
 }
 
-export interface ApiStatic {
+export interface FlyStatic {
   guest_path: string
+  tigris_bucket?: string
   url_prefix: string
 }
 
-export interface ApiStopConfig {
+export interface FlyStopConfig {
   signal?: string
-  timeout?: string
+  timeout?: FlyDuration
 }
 
-export interface ApiTLSOptions {
+export interface FlyTLSOptions {
   alpn?: string[]
   default_self_signed?: boolean
   versions?: string[]
 }
 
+export interface FlyDnsForwardRule {
+  addr?: string
+  basename?: string
+}
+
+export interface FlyDnsOption {
+  name?: string
+  value?: string
+}
+
 export enum MainStatusCode {
   Unknown = 'unknown',
   CapacityErr = 'insufficient_capacity',
+}
+
+export enum MachineHostStatusEnum {
+  Ok = 'ok',
+  Unknown = 'unknown',
+  Unreachable = 'unreachable',
 }
 
 export enum SignalRequestSignalEnum {
@@ -446,12 +521,47 @@ export enum SignalRequestSignalEnum {
   SIGUSR1 = 'SIGUSR1',
 }
 
+export enum VolumeHostStatusEnum {
+  Ok = 'ok',
+  Unknown = 'unknown',
+  Unreachable = 'unreachable',
+}
+
+export enum FlyDurationTimeDurationEnum {
+  MinDuration = -9223372036854776000,
+  MaxDuration = 9223372036854776000,
+  Nanosecond = 1,
+  Microsecond = 1000,
+  Millisecond = 1000000,
+  Second = 1000000000,
+  Minute = 60000000000,
+  Hour = 3600000000000,
+  MinDuration1 = -9223372036854776000,
+  MaxDuration2 = 9223372036854776000,
+  Nanosecond3 = 1,
+  Microsecond4 = 1000,
+  Millisecond5 = 1000000,
+  Second6 = 1000000000,
+  Minute7 = 60000000000,
+  Hour8 = 3600000000000,
+}
+
+/** FieldRef selects a field of the Machine: supports id, version, app_name, private_ip, region, image. */
+export enum FlyEnvFromFieldRefEnum {
+  Id = 'id',
+  Version = 'version',
+  AppName = 'app_name',
+  PrivateIp = 'private_ip',
+  Region = 'region',
+  Image = 'image',
+}
+
 /**
  * * no - Never try to restart a Machine automatically when its main process exits, whether that’s on purpose or on a crash.
  * * always - Always restart a Machine automatically and never let it enter a stopped state, even when the main process exits cleanly.
  * * on-failure - Try up to MaxRetries times to automatically restart the Machine if it exits with a non-zero exit code. Default when no explicit policy is set, and for Machines with schedules.
  */
-export enum ApiMachineRestartPolicyEnum {
+export enum FlyMachineRestartPolicyEnum {
   No = 'no',
   Always = 'always',
   OnFailure = 'on-failure',
@@ -471,6 +581,15 @@ export interface MachinesListParams {
   appName: string
 }
 
+export interface MachinesDeleteParams {
+  /** Force kill the machine if it's running */
+  force?: boolean
+  /** Fly App Name */
+  appName: string
+  /** Machine ID */
+  machineId: string
+}
+
 export interface MachinesListProcessesParams {
   /** Sort by */
   sort_by?: string
@@ -485,6 +604,8 @@ export interface MachinesListProcessesParams {
 export interface MachinesRestartParams {
   /** Restart timeout as a Go duration string or number of seconds */
   timeout?: string
+  /** Unix signal name */
+  signal?: string
   /** Fly App Name */
   appName: string
   /** Machine ID */

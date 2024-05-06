@@ -1,24 +1,25 @@
 import Client from '../client'
 import {
-  ApiMachineConfig,
-  ApiMachineInit,
-  ApiMachineService,
-  ApiMachineMount,
-  ApiMachinePort,
-  ApiMachineCheck,
-  ApiMachineRestart,
-  ApiMachineGuest,
+  FlyMachineConfig,
+  FlyMachineInit,
+  FlyMachineService,
+  FlyMachineMount,
+  FlyMachinePort,
+  FlyMachineCheck,
+  FlyMachineRestart,
+  FlyMachineGuest,
   CheckStatus as ApiCheckStatus,
   CreateMachineRequest as ApiCreateMachineRequest,
   ImageRef as ApiImageRef,
-  Machine as ApiMachine,
-  StateEnum as ApiMachineState,
-  SignalRequestSignalEnum as ApiMachineSignal,
+  Machine as FlyMachine,
+  StateEnum as FlyMachineState,
+  SignalRequestSignalEnum as FlyMachineSignal,
+  FlyDuration,
 } from './types'
 import { APIResponse } from './utils'
 
 // We override the generated types from openapi spec to mark fields as non-optional
-export interface MachineConfig extends ApiMachineConfig {
+export interface MachineConfig extends FlyMachineConfig {
   // The Docker image to run
   image: string
   // Optionally one of hourly, daily, weekly, monthly. Runs machine at the given interval. Interval starts at time of machine creation
@@ -98,7 +99,7 @@ export enum MachineState {
   Destroyed = 'destroyed',
 }
 
-interface MachineMount extends ApiMachineMount {
+interface MachineMount extends FlyMachineMount {
   encrypted: boolean
   // Absolute path on the VM where the volume should be mounted. i.e. /data
   path: string
@@ -119,14 +120,14 @@ export enum ConnectionHandler {
   PROXY_PROTO = 'proxy_proto',
 }
 
-interface MachinePort extends ApiMachinePort {
+interface MachinePort extends FlyMachinePort {
   // Public-facing port number
   port: number
   // Array of connection handlers for TCP-based services.
   handlers?: ConnectionHandler[]
 }
 
-interface MachineService extends ApiMachineService {
+interface MachineService extends FlyMachineService {
   protocol: 'tcp' | 'udp'
   internal_port: number
   ports: MachinePort[]
@@ -141,18 +142,18 @@ interface MachineService extends ApiMachineService {
   }
 }
 
-interface MachineCheck extends ApiMachineCheck {
+interface MachineCheck extends FlyMachineCheck {
   // tcp or http
   type: 'tcp' | 'http'
   // The port to connect to, likely should be the same as internal_port
   port: number
   // The time between connectivity checks
-  interval: string
+  interval: FlyDuration
   // The maximum time a connection can take before being reported as failing its healthcheck
-  timeout: string
+  timeout: FlyDuration
 }
 
-interface MachineGuest extends ApiMachineGuest {
+interface MachineGuest extends FlyMachineGuest {
   cpu_kind: 'shared' | 'performance'
   cpus: number
   memory_mb: number
@@ -173,7 +174,7 @@ interface MachineImageRef extends Omit<ApiImageRef, 'labels'> {
   labels: Record<string, string> | null
 }
 
-export interface MachineResponse extends Omit<ApiMachine, 'image_ref'> {
+export interface MachineResponse extends Omit<FlyMachine, 'image_ref'> {
   id: string
   name: string
   state: MachineState
@@ -182,11 +183,11 @@ export interface MachineResponse extends Omit<ApiMachine, 'image_ref'> {
   private_ip: string
   config: {
     env: Record<string, string>
-    init: ApiMachineInit
+    init: FlyMachineInit
     mounts: MachineMount[]
     services: MachineService[]
     checks: Record<string, MachineCheck>
-    restart: ApiMachineRestart
+    restart: FlyMachineRestart
     guest: MachineGuest
     size: 'shared-cpu-1x' | 'shared-cpu-2x' | 'shared-cpu-4x'
   } & MachineConfig
@@ -216,11 +217,11 @@ export interface RestartMachineRequest extends GetMachineRequest {
 }
 
 export interface SignalMachineRequest extends GetMachineRequest {
-  signal: ApiMachineSignal
+  signal: FlyMachineSignal
 }
 
 export interface StopMachineRequest extends RestartMachineRequest {
-  signal?: ApiMachineSignal
+  signal?: FlyMachineSignal
 }
 
 export type StartMachineRequest = GetMachineRequest
@@ -259,12 +260,12 @@ export interface WaitMachineRequest extends GetMachineRequest {
   instance_id?: string
   // Default timeout is 60 (seconds)
   timeout?: string
-  state?: ApiMachineState
+  state?: FlyMachineState
 }
 
 export interface WaitMachineStopRequest extends WaitMachineRequest {
   instance_id: string
-  state?: ApiMachineState.Stopped
+  state?: FlyMachineState.Stopped
 }
 
 export interface MachineVersionResponse {
@@ -368,7 +369,7 @@ export class Machine {
     const { app_name, machine_id, ...body } = payload
     const path = `apps/${app_name}/machines/${machine_id}/stop`
     return await this.client.safeRest(path, 'POST', {
-      signal: ApiMachineSignal.SIGTERM,
+      signal: FlyMachineSignal.SIGTERM,
       ...body,
     })
   }
