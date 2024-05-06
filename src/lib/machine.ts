@@ -448,10 +448,15 @@ export class Machine {
     payload: DeleteLeaseRequest
   ): Promise<APIResponse<OkResponse>> {
     const { app_name, machine_id, nonce } = payload
-    const path = `apps/${app_name}/machines/${machine_id}/lease/${nonce}`
-    return await this.client.safeRest(path, 'DELETE', {
-      'fly-machine-lease-nonce': nonce,
-    })
+    const path = `apps/${app_name}/machines/${machine_id}/lease`
+    return await this.client.safeRest(
+      path,
+      'DELETE',
+      {},
+      {
+        'fly-machine-lease-nonce': nonce,
+      }
+    )
   }
 
   async cordonMachine(
