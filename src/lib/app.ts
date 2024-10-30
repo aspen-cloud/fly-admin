@@ -18,7 +18,7 @@ export interface ListAppDetailedResponse {
 
 export type GetAppRequest = string
 
-const getOrganizationApps = `query($slug: String!) {
+const getOrganizationAppsDetailedQuery = `query($slug: String!) {
   organization(slug: $slug) {
     apps {
         nodes {
@@ -48,7 +48,7 @@ const getOrganizationApps = `query($slug: String!) {
   }
 }`
 
-const getAppQuery = `query($name: String!) {
+const getAppDetailedQuery = `query($name: String!) {
   app(name: $name) {
       name
       status
@@ -135,7 +135,7 @@ export class App {
       string,
       { organization: any }
     >({
-      query: getOrganizationApps,
+      query: getOrganizationAppsDetailedQuery,
       variables: { slug: org_slug },
     })
     if (response.error) {
@@ -156,7 +156,7 @@ export class App {
     app_name: GetAppRequest
   ): Promise<APIResponse<AppDetailedResponse>> {
     const response = await this.client.safeGqlPost<string, { app: any }>({
-      query: getAppQuery,
+      query: getAppDetailedQuery,
       variables: { name: app_name },
     })
 
