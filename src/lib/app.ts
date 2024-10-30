@@ -13,7 +13,7 @@ export interface ListAppResponse {
 }
 
 export interface ListAppDetailedResponse {
-  apps: AppResponse[]
+  apps: AppDetailedResponse[]
 }
 
 export type GetAppRequest = string
@@ -87,6 +87,9 @@ export interface AppResponse {
     name: string
     slug: string
   }
+}
+
+export interface AppDetailedResponse extends AppResponse {
   ipAddresses: IPAddress[]
   machines: AppMachine[]
 }
@@ -151,7 +154,7 @@ export class App {
 
   async getAppDetailed(
     app_name: GetAppRequest
-  ): Promise<APIResponse<AppResponse>> {
+  ): Promise<APIResponse<AppDetailedResponse>> {
     const response = await this.client.safeGqlPost<string, { app: any }>({
       query: getAppQuery,
       variables: { name: app_name },
