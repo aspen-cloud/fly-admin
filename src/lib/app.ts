@@ -30,9 +30,9 @@ const getOrganizationAppsDetailedQuery = `query($slug: String!) {
             }
             ipAddresses {
                 nodes {
-                type
-                region
-                address
+                    type
+                    region
+                    address
                 }
             }
             machines {
